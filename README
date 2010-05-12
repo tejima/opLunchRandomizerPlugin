@@ -7,8 +7,8 @@
 ■CRONの設定
 /etc/crontab に以下のように設定する。
 
-35 11 * * * /var/www/sns/sns.com/symfony sa-lunch shuffle
-00 12 * * * /var/www/sns/sns.com/symfony sa-lunch create
+35 11 * * * cd /var/www/sns/sns.com/ && ./symfony sa-lunch shuffle
+00 12 * * * cd /var/www/sns/sns.com/ && ./symfony sa-lunch create
 
 ■設定
 プラグイン設定画面から下記の各種パラメータを設置する。
