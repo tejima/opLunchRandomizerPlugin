@@ -195,7 +195,7 @@ class LunchEventTask extends sfBaseTask
 
     Doctrine::getTable('SnsConfig')->set('target_lunch_event',$event->id);
 
-    $this->log2activity($member_id,'ランチイベントイベントを作成！');
+    $this->log2activity($member_id,'ランチイベントを作成！');
   }
   private function log2activity($id,$body){
     $act = new ActivityData();
