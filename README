@@ -3,14 +3,13 @@
 ./symfony opPlugin:install opLunchRandomizerPlugin
 ※ベータ版の場合は -s beta オプションを付ける。
 
-
 ■CRONの設定
 /etc/crontab に以下のように設定する。
 
 35 11 * * * cd /var/www/sns/sns.com/ && ./symfony sa-lunch shuffle
 00 12 * * * cd /var/www/sns/sns.com/ && ./symfony sa-lunch create
 
-■設定
+■管理画面の設定
 プラグイン設定画面から下記の各種パラメータを設置する。
 
 LrBody ランチイベント告知文章（ルールなど）
@@ -20,5 +19,10 @@ LrCommunity ランチイベントを設置するコミュニティID
 
 設定値をすべて入力しないと、うまく動作しない。
 
+■更新履歴
+2010/07/21 READMEに更新履歴、TODO欄を追加
 
+■TODO
+・アクティビティ報告に対象のイベントへのリンクを貼る
+・省略名称を sa-lunch => tjm:lunch tjm-lunchへ。
 
