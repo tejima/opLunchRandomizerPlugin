@@ -28,7 +28,9 @@ class LunchEventTask extends sfBaseTask
     print_r($member);
   }
   private function shuffle(){
-    $alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    $possible_group_names = '[A-E]';
+    $infty = 9999;
+
     $target_event_id = Doctrine::getTable('SnsConfig')->get('target_lunch_event');
 
     if(!$target_event_id){
@@ -42,10 +44,8 @@ class LunchEventTask extends sfBaseTask
       $m = Doctrine::getTable('Member')->find($member->member_id);
       $members[$member->member_id]['nickname'] = $m->name;
     }
+    $member_count = count($members);
 
-    //グループ数の目安
-    $group_len = floor((count($members) - 2) / 4);
-    
     //対象イベントのコメント。参加希望を取得する
     $commentList = Doctrine::getTable('CommunityEventComment')->findByCommunityEventId($target_event_id);
     foreach($commentList as $comment){
@@ -53,95 +53,112 @@ class LunchEventTask extends sfBaseTask
       $body = strtoupper(mb_convert_kana($body,'a','UTF8'));
       $body = preg_replace('/で|希望/','陣',$body);
       $body = preg_replace('/～|~|から|以降/','-',$body);
-      $body = preg_replace('/([A-E])(まで|より前|以前)/','-$1',$body);
-      if (preg_match('/([A-E])--?([A-E]?)/',$body,$match))
+      $body = preg_replace('/('.$possible_group_names.')(まで|より前|以前)/','-$1',$body);
+
+      $member_id = $comment->getMemberId();
+      if (!isset($members[$member_id]))
       {
-        $min = strpos($alphabet,$match[1]);
-        $max = 3;
+        continue;
+      }
+
+      $min = 0;
+      $max = $infty;
+
+      if (preg_match('/('.$possible_group_names.')--?('.$possible_group_names.'?)/',$body,$match))
+      {
+        $min = ord($match[1]) - 0x41;
         if ($match[2])
-        {
-          $max = strpos($alphabet,$match[2]);
+       {
+          $max = ord($match[2]) - 0x41;
         }
-        if ($group_len < 3)
-        {
-          $max = $group_len;
-        }
-        $r = rand($min,$max);
-        $body = preg_replace('/[A-E]--?[A-E]?/',substr($alphabet,$r,1)."陣",$body);
       }
-      else if(preg_match('/-([A-E])/',$body,$match))
+      elseif (preg_match('/-('.$possible_group_names.')/',$body,$match))
       {
-        $max = strpos($alphabet,$match[1]);
-        if ($group_len < 3)
-        {
-          $max = $group_len;
-        }
-        $r = rand(0,$max);
-        $body = preg_replace('/-[A-E]/',substr($alphabet,$r,1)."陣",$body);
+        $max = ord($match[1]) - 0x41;
       }
-      if (preg_match('/([A-E])陣/',$body,$match) && isset($members[$comment->getMemberId()]))
+      elseif (preg_match('/('.$possible_group_names.')/',$body,$match))  
       {
-        $members[$comment->getMemberId()]['h'] = $match[1];
+        $min = $max = ord($match[1]) - 0x41;
       }
-      if (preg_match('/(X|別)陣/',$body,$match) && isset($members[$comment->getMemberId()]))
+      elseif (preg_match('/(X|別)/',$body,$match))
       {
-        $members[$comment->getMemberId()]['h'] = 'X';
+        $min = $max = $infty;
+        $member_count--;
       }
+      else
+      {
+        // any
+      }
+      $members[$member_id]['min'] = $min;
+      $members[$member_id]['max'] = $max;
     }
+
     //シャッフル
     shuffle($members);
+
+    //グループ数目安計算
+    $group_count = floor(($member_count + 3) / 4);
     $groups = array();
-    //希望あり優先決定
+    for ($g=0; $g<$group_count; $g++)
+    {
+      $groups[$g] = array();
+    }
+
+    //希望枠が１つだけの人を最優先に決定
     foreach ($members as $i => $member)
     {
-      if (@$member['h'])
+      $min = $member['min'];
+      $max = $member['max'];
+
+      if ($min == $infty)
       {
-        $h = strpos($alphabet,$member['h']);
-        $groups[$h][] = $member;
+        $groups[$infty][] = $member;
+        unset($members[$i]);
+      }
+      elseif ($min == $max)
+      {
+        $groups[$min][] = $member;
         unset($members[$i]);
       }
     }
-    $p = 0;
-    foreach ($members as $member)
+    //希望あり優先決定
+    foreach ($members as $i => $member)
     {
-      if (count(@$groups[$p]) >= 4)
-        $p++;
-      $groups[$p][] = $member;
-      if (count(@$groups[$p]) >= 4)
-        $p++;
+      $min = $member['min'];
+      $max = $member['max'];
+      if ($min == 0 && $max == $infty)
+      {
+        // どこでもいい人は後回し
+        continue;
+      }
+      $g = rand($min, min($group_count-1,$max));
+      $groups[$g][] = $member;
+      unset($members[$i]);
     }
 
-    //端数処理
-    foreach ($groups as $i => $group)
+    // 3人で埋めてから
+    foreach ($members as $i => $member)
     {
-      if (count($group) <= 2)
+      for ($g=0; $g<$group_count; $g++)
       {
-        $j = $i - 1;
-        while (true)
+        if (count($groups[$g]) < 3)
         {
-          if ($j < 0 || !@$groups[$j])
-          {
-            break;
-          }
-          switch (count($groups[$i]))
-          {
-            case 1:
-              if (count($groups[$j]) >= 4)
-              {
-                $groups[$j][] = array_pop($groups[$i]);
-                unset($groups[$i]);
-                break 2;
-              }
-              break;
-            case 2:
-              if (count($groups[$j]) >= 4)
-              {
-                $groups[$j][] = array_pop($groups[$i]);
-                break;
-              }
-              break;
-          }
-          $j--;
+          $groups[$g][] = $member;
+          unset($members[$i]);
+          break;
+        }
+      }
+    }
+    // 4人目を入れる
+    foreach ($members as $i => $member)
+    {
+      for ($g=0; $g<$group_count; $g++)
+      {
+        if (count($groups[$g]) < 4)
+        {
+          $groups[$g][] = $member;
+          unset($members[$i]);
+          break;
         }
       }
     }
@@ -150,7 +167,8 @@ class LunchEventTask extends sfBaseTask
     $result = "";
     foreach ($groups as $i => $group)
     {
-      $result .= substr($alphabet,$i,1) . "\n";
+      $groupName = ($i == $infty) ? 'X' : chr(0x41+$i);
+      $result .= $groupName . "\n";
       foreach ($group as $j => $member)
       {
         $result .= $member['nickname'] . "\n";
