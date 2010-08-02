@@ -79,6 +79,7 @@ class LunchEventTask extends sfBaseTask
 
   private $possible_group_names = '[A-E]';
   private $infty = 9;
+  private $footer_identifier = '■ランチ時間帯';
 
   protected function configure()
   {
@@ -184,7 +185,7 @@ class LunchEventTask extends sfBaseTask
     $q = Doctrine_Query::create()
       ->select("max(id) as result_id")
       ->from("CommunityEventComment cec")
-      ->where("cec.community_event_id=? AND cec.body LIKE '%■ランチ時間帯%'", $event_id);
+      ->where("cec.community_event_id=? AND cec.body LIKE '%". $this->footer_identifier ."%'", $event_id);
     $rs = $q->fetchOne();
     return $rs['result_id'];
   }
@@ -208,7 +209,7 @@ class LunchEventTask extends sfBaseTask
         $g = $line;
         $groups[$g] = array();
       }
-      elseif (preg_match('/■ランチ時間帯/',$line))
+      elseif (preg_match('/'.$this->footer_identifier.'/',$line))
       {
         continue;
       }
