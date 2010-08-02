@@ -447,13 +447,13 @@ class LunchEventTask extends sfBaseTask
 
     // 全メンバー対照をロード
     $this->loadMemberData();
-    $M = count($this->members);
+    $M = count($this->members)/2 + 1;
 
 	$prev1 = makeMatchTable($M, $this->groupsInMemberId( $this->getPreviousGrouping(1) ) );
 	$prev2 = makeMatchTable($M, $this->groupsInMemberId( $this->getPreviousGrouping(2) ) );
 
     $result = null;
-    $trial_count = 1000;
+    $trial_count = 5000;
     $minimum_conflict = $M * $M * 2;
 
     for ($t=0; $t<$trial_count; $t++) {
@@ -499,8 +499,8 @@ class LunchEventTask extends sfBaseTask
         {
           for ($b=$a+1; $b<$cnt; $b++)
           {
-            $id_a = $group[$a]['id'];
-            $id_b = $group[$b]['id'];
+            $id_a = $group[$a];//['id'];
+            $id_b = $group[$b];//['id'];
             $matching[$id_a][$id_b] = $matching[$id_b][$id_a] = 1;
           }
         }
@@ -521,7 +521,7 @@ class LunchEventTask extends sfBaseTask
 
       if ($conflict < $minimum_conflict)
       {
-//      printf("T=%d: score=%g; ", $t, $conflict); p($belongs,false);
+//        printf("T=%d: score=%g; ", $t, $conflict); p($belongs,false);
         $minimum_conflict = $conflict;
         $result = $groups;
       }
