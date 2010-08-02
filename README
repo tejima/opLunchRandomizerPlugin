@@ -21,7 +21,11 @@ LrCommunity ランチイベントを設置するコミュニティID
 ■更新履歴
 2010/07/21 [tejima] READMEに更新履歴、TODO欄を追加
 2010/07/27 [tozuka] 5人組が出来てしまう問題を解消
-2010/08/02 [tozuka] 直前回の組み合わせと可能な限りかぶらないグループ分けを行うモード(shuffleMCMC, shuffleMCMC2) を実装。shuffleMCMCは前回の組み合わせだけを、shuffleMCMC2はウェイト1/3で前々回の組み合わせについても考慮する。
+2010/08/02 [tozuka]
+直前回の組み合わせと可能な限りかぶらないグループ分けを行うモード
+shuffleMCMC, shuffleMCMC2 を実装。
+・shuffleMCMCは前回の組み合わせだけを考慮
+・shuffleMCMC2はウェイト1/3で前々回の組み合わせについても考慮
 
 ■TODO
 ・アクティビティ報告に対象のイベントへのリンクを貼る
