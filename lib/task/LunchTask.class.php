@@ -433,7 +433,7 @@ class LunchEventTask extends sfBaseTask
       }
     }
 
-	$this->postResult($groups,false);
+	$this->postResult($groups);
   }
 
   // 過去（最大で直近2日分）の結果を踏まえつつ、できるだけかぶらないようなランダムなグループを作る
@@ -527,7 +527,7 @@ class LunchEventTask extends sfBaseTask
       }
     }
 
-	$this->postResult($result,true);
+	$this->postResult($result);
   }
 
   //コメントとしてシャッフル結果を発表
